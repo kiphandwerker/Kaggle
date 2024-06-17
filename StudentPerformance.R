@@ -2,6 +2,7 @@ library(dplyr)
 library(fmsb)
 library(MASS)
 library(ordinal)
+library(rms)
 df <- read.csv("DATA (1).csv")
 df <- df[-1]
 
@@ -13,8 +14,8 @@ df2 <- df %>%
   rename('Age' = X1, 'Sex' = X2, 'HStype' = X3,'Scholarship' = X4, 'AdditionalWork' = X5, 'Extracurriculars' = X6,
          'Partner' = X7, 'Salary' = X8, 'Transportation' = X9, 'LivingLocation' = X10,
          'MotherEdu' = X11, 'FatherEdu' = X12, 'Siblings' = X13, 'ParentalStatus' = X14, 'MotherOcc' = X15,
-         'FatherOcc' = X16, 'WeeklyStudy' = X17, 'NonScienceReadingFreq' = X18, 'ScienceReadingFreq' = X19,
-         'DepartmentEngagememt' = X20, 'ImpactofProjects' = X21, 'Attendance' = X22, 'MidtermPrepGroup' = X23,
+         'FatherOcc' = X16, 'WeeklyStudy' = X17, 'NonSciReadingFreq' = X18, 'SciReadingFreq' = X19,
+         'DeptEngagememt' = X20, 'ImpactofProjects' = X21, 'Attendance' = X22, 'MidtermPrepGroup' = X23,
          'MidtermPrepStudy' = X24, 'NoteTaking' = X25, 'Listening' = X26, 'DiscussionViews' = X27,
          'FlipClassroomViews' = X28, 'LastSemesterGPA' = X29, 'ExpectedGPA' = X30,
          'CourseID' = COURSE.ID, 'Grade' = GRADE) %>% 
@@ -70,14 +71,14 @@ df2 <- df %>%
   WeeklyStudy = factor(WeeklyStudy, levels = 1:5,
              labels = c('None','<5 hours','6-10 hours','11-20 hours','+20 hours')),
 
-  NonScienceReadingFreq = factor(NonScienceReadingFreq, levels = 1:3,
+  NonSciReadingFreq = factor(NonSciReadingFreq, levels = 1:3,
              labels = c('None', 'Sometimes', 'Often')),
 
-  ScienceReadingFreq = factor(ScienceReadingFreq, levels = 1:3,
+  SciReadingFreq = factor(SciReadingFreq, levels = 1:3,
              labels = c('None', 'Sometimes', 'Often')),
 
 
-  DepartmentEngagememt = factor(DepartmentEngagememt, levels = 1:2,
+  DeptEngagememt = factor(DeptEngagememt, levels = 1:2,
              labels = c('Yes','No')),
   
   ImpactofProjects = factor(ImpactofProjects, levels = 1:3,
@@ -118,23 +119,31 @@ df2 <- df %>%
   
 )
 
+write.csv(df2, "StudentPerformance.csv")
 
 # maybe turn some factors into numerics?
 # 1, 8, 17, 29,30
 
 
-summary(lm(X30~.,data=df))
-
-fit. <- polr(Grade~Age,data=df2, Hess = T)
-summary(fit.)
-
-
-fit.0 <- clm(Grade~1, data=df2, link='logit')
+fit0 <- clm(Grade~1, data=df2, link='logit')
 summary(fit.0)
-
-
-fit.all <- clm(Grade~., data=df2, link='logit')
-summary(fit.all)
-
+fitall <- clm(Grade~., data=df2, link='logit')
+summary(fitall)
 
 anova(fit.0,fit.all)
+
+
+stepmodel <- fitall %>% stepAIC(trace=T)
+coef(stepmodel)
+
+stepfit <- clm(Grade~Age + Sex + AdditionalWork + Extracurriculars + Transportation + 
+      MotherEdu + ImpactofProjects + MidtermPrepGroup + LastSemesterGPA + 
+      CourseID, data=df2, link='logit')
+
+
+
+
+
+ologit <- lrm(Grade~.,data=df2)
+
+

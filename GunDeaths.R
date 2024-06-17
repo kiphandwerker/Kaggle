@@ -3,6 +3,7 @@ library(ggplot2)
 library(gridExtra)
 library(kableExtra)
 library(reshape2)
+library(MASS)
 
 FileList <- list.files("../Kaggle/Gun/")
 DF <- lapply(FileList,function(x){read.csv(paste0("../Kaggle/Gun/",x))})
@@ -19,7 +20,8 @@ DF <- DF %>% mutate(AGE = case_when(age < 10~"<10",
                                     age >=70 & age<80~"70-79",
                                     age >=80~">80"))
 DF$police <- as.factor(DF$police)
-
+DF$month <- as.factor(DF$month)
+DF$AGE <-  as.factor(DF$AGE)
 
 p1 <- ggplot(DF, aes(x=year)) + geom_bar(aes(fill=sex),position = "dodge") + ggtitle("Gun deaths per year by Gender")
 p2 <- ggplot(DF, aes(x=sex)) + geom_bar(aes(fill=sex))+coord_flip()+ ggtitle("Total gun deaths by Gender")
@@ -54,6 +56,8 @@ ggplot(MonthByRace, aes(x=MonthName,y=value,group=variable,color=variable)) +
   stat_summary(fun.y = sum, na.rm = TRUE, group = 1, color = 'black', geom ='line')
 
 
+DF %>% filter(police==1) %>% ggplot( aes(x=police)) + geom_bar(aes(fill=race))+ ggtitle("Police")
+
 RacebyPolice <- as.data.frame.matrix(table(DF$race,DF$police))
 RacebyPolice$Proportion <- round((RacebyPolice$"1"/RacebyPolice$"0")*100,2)
 colnames(RacebyPolice) <- c("No Police Involvement","Police Involvement","Proportion (%)")
@@ -67,5 +71,12 @@ kbl(RacebyIntent)%>%
 ggplot(DF, aes(x=intent)) + geom_bar(aes(fill=race))+ ggtitle("Total gun deaths by Race and Intent")
 
 
-o <- glm(police~AGE+race,data=DF, family="binomial")
-summary(o)
+
+
+
+fitall <- glm(police~AGE+race+intent,data=DF, family="binomial")
+summary(fitall)
+
+
+
+
